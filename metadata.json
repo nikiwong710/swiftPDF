@@ -1,0 +1,6 @@
+{
+  "name": "SwiftPDF",
+  "description": "A powerful local PDF utility for merging, compressing, converting, and editing PDFs entirely in your browser.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
