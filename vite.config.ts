@@ -14,6 +14,18 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      minify: 'terser',
+      rollupOptions: {
+        output: {
+          entryFileNames: '[name].[hash].js',
+          chunkFileNames: '[name].[hash].js',
+          assetFileNames: 'assets/[name].[hash][extname]',
+        },
+      },
+    },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
