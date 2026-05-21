@@ -1,5 +1,4 @@
 name = "swiftpdf"
-main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 [build]
@@ -12,5 +11,5 @@ name = "swiftpdf-prod"
 [vars]
 GEMINI_API_KEY = ""
 
-[assets]
-directory = "./dist"
+[site]
+bucket = "./dist"
