@@ -1,39 +1,16 @@
 name = "swiftpdf"
-type = "javascript"
-account_id = ""
-workers_dev = true
-route = ""
-zone_id = ""
+main = "src/index.ts"
 compatibility_date = "2024-01-01"
-
-[env.production]
-name = "swiftpdf-prod"
-route = "example.com/*"
-zone_id = ""
 
 [build]
 command = "npm run build"
 cwd = "./"
-watch_paths = ["src/**/*.ts", "src/**/*.tsx"]
 
-[build.upload]
-format = "service-worker"
-
-[env.production.build.upload]
-format = "modules"
-
-[[env.production.build.upload.rules]]
-type = "CompiledContentType"
-globs = ["**/*.wasm"]
-fallthrough = true
-
-[[env.production.build.upload.rules]]
-type = "Text"
-globs = ["**/*.svg"]
-fallthrough = true
-
-[triggers]
-crons = []
+[env.production]
+name = "swiftpdf-prod"
 
 [vars]
 GEMINI_API_KEY = ""
+
+[assets]
+directory = "./dist"
