@@ -1,14 +1,17 @@
 import { getAssetFromKV, MethodNotAllowedError, NotFoundError } from '@cloudflare/kv-asset-handler';
 
 type Env = {
-  __STATIC_CONTENT_MANIFEST: string;
+  __STATIC_CONTENT_MANIFEST?: string;
+  ASSETS?: {
+    fetch: (request: Request) => Promise<Response>;
+  };
 };
 
 // MIME type mappings
 const MIME_TYPES: Record<string, string> = {
   '.js': 'application/javascript; charset=utf-8',
   '.mjs': 'application/javascript; charset=utf-8',
-  '.json': 'application/json',
+  '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
   '.svg': 'image/svg+xml',
@@ -20,6 +23,7 @@ const MIME_TYPES: Record<string, string> = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
 function getMimeType(pathname: string): string {
@@ -31,6 +35,10 @@ function setContentType(response: Response, pathname: string): Response {
   const mimeType = getMimeType(pathname);
   const headers = new Headers(response.headers);
   headers.set('Content-Type', mimeType);
+  headers.set('Cache-Control', pathname === '/index.html' 
+    ? 'max-age=0, no-cache, no-store, must-revalidate'
+    : 'max-age=3600, public'
+  );
   
   return new Response(response.body, {
     status: response.status,
@@ -44,49 +52,56 @@ export default {
     const url = new URL(request.url);
     
     try {
-      // Try to get the asset
+      // Try to get the asset using KV asset handler
+      const options = env.__STATIC_CONTENT_MANIFEST 
+        ? { ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST }
+        : {};
+        
       const response = await getAssetFromKV(
         {
           request,
           waitUntil: () => {},
         },
-        {
-          ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
-          cacheControl: {
-            default: 'max-age=3600',
-            'index.html': 'max-age=0, no-cache, no-store, must-revalidate',
-          },
-        }
+        options
       );
       
-      // Set correct MIME type
       return setContentType(response, url.pathname);
     } catch (e) {
       // For SPA routing: serve index.html for non-asset requests
       if (e instanceof NotFoundError && !url.pathname.includes('.')) {
         // No file extension means it's likely a route, serve index.html
         try {
+          const indexRequest = new Request(
+            new URL('/index.html', url).toString(),
+            request
+          );
+          
+          const options = env.__STATIC_CONTENT_MANIFEST 
+            ? { ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST }
+            : {};
+            
           const response = await getAssetFromKV(
             {
-              request: new Request(new URL('/index.html', url).toString(), request),
+              request: indexRequest,
               waitUntil: () => {},
             },
-            {
-              ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST,
-              cacheControl: {
-                'index.html': 'max-age=0, no-cache, no-store, must-revalidate',
-              },
-            }
+            options
           );
           
           return setContentType(response, '/index.html');
-        } catch {
-          return new Response('Not Found', { status: 404 });
+        } catch (indexError) {
+          return new Response('Not Found', { 
+            status: 404,
+            headers: { 'Content-Type': 'text/plain' }
+          });
         }
       } else if (e instanceof MethodNotAllowedError) {
         return new Response('Method Not Allowed', { status: 405 });
       }
-      return new Response('Not Found', { status: 404 });
+      
+      // Log the error for debugging
+      console.error('Asset fetch error:', e);
+      return new Response('Internal Server Error', { status: 500 });
     }
   },
 };
