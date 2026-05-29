@@ -27,7 +27,6 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import * as fabric from 'fabric';
 import { cn } from './lib/utils';
-import { detectIntent, ToolAction } from './services/geminiService';
 
 // Setup pdfjs worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;

@@ -1,13 +1,14 @@
 name = "swiftpdf"
-compatibility_date = "2024-01-01"
+type = "javascript"
 
 [build]
 command = "npm run build"
 cwd = "./"
-watch_paths = ["src/**/*.{ts,tsx}", "lib/**/*.ts", "*.tsx", "*.css"]
+
+[build.upload]
+format = "service-worker"
 
 [env.production]
 name = "swiftpdf-prod"
 
-[vars]
-GEMINI_API_KEY = ""
+
